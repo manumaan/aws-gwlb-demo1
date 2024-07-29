@@ -34,32 +34,10 @@ resource "aws_security_group" "tracert-geneve" {
   vpc_id = aws_vpc.glbet.id
 
   ingress {
-    from_port   = -1
-    to_port     = -1
-    protocol    = "icmp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow ICMP echo requests"
-  }
-
-  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 6081
-    to_port     = 6081
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0"]
   }  
 
   ingress {
@@ -134,12 +112,19 @@ resource "aws_instance" "fw-ec2" {
 
 resource "aws_ec2_instance_connect_endpoint" "fw-endpoint" {
   subnet_id = aws_subnet.glbet_subnet.id
-  depends_on = [aws_subnet.glbet_subnet]
+  security_group_ids = [aws_security_group.tracert-geneve.id]
+  depends_on = [aws_subnet.glbet_subnet,aws_security_group.tracert-geneve]
+  tags = {
+    Name = "fw-ec2-endpoint"
+  }
 }
 
 
 resource "aws_ec2_instance_connect_endpoint" "app-endpoint" {
   subnet_id = aws_subnet.app_subnet.id
   depends_on = [aws_subnet.app_subnet]
+  tags = {
+    Name = "app-ec2-endpoint"
+  }
 }
 
