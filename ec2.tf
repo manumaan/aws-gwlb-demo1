@@ -12,10 +12,10 @@ resource "aws_security_group" "tracert" {
   }
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+      from_port = 22
+      to_port = 22
+      protocol = "tcp"
+      self = true
   }
 
   egress {
@@ -33,12 +33,7 @@ resource "aws_security_group" "tracert-geneve" {
   name   = "GWLB Instance"
   vpc_id = aws_vpc.glbet.id
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0"]
-  }  
+
 
   ingress {
     from_port   = 0
@@ -46,6 +41,14 @@ resource "aws_security_group" "tracert-geneve" {
     protocol    = -1
     cidr_blocks = ["10.10.0.0/16"]
   }  
+
+  ingress {
+      from_port = 22
+      to_port = 22
+      protocol = "tcp"
+      self = true
+  }
+
 
   egress {
     from_port   = 0
@@ -80,7 +83,7 @@ resource "aws_instance" "fw-ec2" {
   instance_type = "t2.micro"
   subnet_id                   = aws_subnet.glbet_subnet.id
   vpc_security_group_ids      = [aws_security_group.tracert-geneve.id]
-  associate_public_ip_address = true
+  #associate_public_ip_address = true
   user_data = <<-EOF
     #!/bin/bash -ex
     yum -y groupinstall "Development Tools"
@@ -122,6 +125,7 @@ resource "aws_ec2_instance_connect_endpoint" "fw-endpoint" {
 
 resource "aws_ec2_instance_connect_endpoint" "app-endpoint" {
   subnet_id = aws_subnet.app_subnet.id
+  security_group_ids = [aws_security_group.tracert.id]
   depends_on = [aws_subnet.app_subnet]
   tags = {
     Name = "app-ec2-endpoint"

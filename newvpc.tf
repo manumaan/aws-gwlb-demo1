@@ -100,6 +100,12 @@ resource "aws_route_table" "nat-rt" {
   }
 }
 
+resource "aws_route_table_association" "nat-rt-a" {
+  subnet_id     = aws_subnet.nat_subnet.id
+  route_table_id = aws_route_table.nat-rt.id
+  depends_on = [aws_route_table.nat-rt,aws_subnet.nat_subnet ]
+}
+
 #App subnet
 resource "aws_subnet" "app_subnet" {
  vpc_id     = aws_vpc.main.id
@@ -185,4 +191,3 @@ resource "aws_route_table_association" "glbet-rt-a" {
   subnet_id      = aws_subnet.glbet_subnet.id
   route_table_id = aws_route_table.glbet-rt.id
 }
-
