@@ -59,7 +59,7 @@ resource "aws_eip" "nat_eip" {
  domain   = "vpc"
  depends_on = [aws_internet_gateway.app-igw]
 }
-
+# Create NAT Gateway
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.nat_subnet.id
@@ -70,7 +70,6 @@ resource "aws_nat_gateway" "nat" {
 
   depends_on = [aws_internet_gateway.app-igw]
 }
-
 
 #NAT subnet
 resource "aws_subnet" "nat_subnet" {
@@ -99,7 +98,7 @@ resource "aws_route_table" "nat-rt" {
     Name = "nat-public-rt"
   }
 }
-
+# NAT route table assignment
 resource "aws_route_table_association" "nat-rt-a" {
   subnet_id     = aws_subnet.nat_subnet.id
   route_table_id = aws_route_table.nat-rt.id
@@ -179,7 +178,7 @@ resource "aws_route_table" "glbet-rt" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id  = aws_internet_gateway.glbet-igw.id
+    gateway_id  = aws_nat_gateway.fw_nat.id
   }
 
   tags = {
@@ -190,4 +189,51 @@ resource "aws_route_table" "glbet-rt" {
 resource "aws_route_table_association" "glbet-rt-a" {
   subnet_id      = aws_subnet.glbet_subnet.id
   route_table_id = aws_route_table.glbet-rt.id
+}
+
+
+# Create a NAT Gateway Elastic IP
+resource "aws_eip" "fw_nat_eip" {
+ domain   = "vpc"
+ depends_on = [aws_internet_gateway.glbet-igw]
+}
+# Create NAT Gateway
+resource "aws_nat_gateway" "fw_nat" {
+  allocation_id = aws_eip.fw_nat_eip.id
+  subnet_id     = aws_subnet.fw_nat_subnet.id
+
+  tags = {
+    Name = "fw nat"
+  }
+
+  depends_on = [aws_internet_gateway.glbet-igw]
+}
+
+#NAT subnet
+resource "aws_subnet" "fw_nat_subnet" {
+ vpc_id     = aws_vpc.glbet.id
+ availability_zone = data.aws_availability_zones.available.names[0]
+ cidr_block = "10.10.2.0/24"
+ tags = {
+   Name = "fw-NAT-pub-Subnet"
+ }
+}
+#NAT subnet route table
+resource "aws_route_table" "fw_nat-rt" {
+  vpc_id = aws_vpc.glbet.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.glbet-igw.id
+  }
+
+  tags = {
+    Name = "fw-nat-public-rt"
+  }
+}
+# NAT route table assignment
+resource "aws_route_table_association" "fw-nat-rt-a" {
+  subnet_id     = aws_subnet.fw_nat_subnet.id
+  route_table_id = aws_route_table.fw_nat-rt.id
+  depends_on = [aws_route_table.fw_nat-rt,aws_subnet.fw_nat_subnet ]
 }

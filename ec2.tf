@@ -83,7 +83,7 @@ resource "aws_instance" "fw-ec2" {
   instance_type = "t2.micro"
   subnet_id                   = aws_subnet.glbet_subnet.id
   vpc_security_group_ids      = [aws_security_group.tracert-geneve.id]
-  #associate_public_ip_address = true
+  associate_public_ip_address = false
   user_data = <<-EOF
     #!/bin/bash -ex
     yum -y groupinstall "Development Tools"
